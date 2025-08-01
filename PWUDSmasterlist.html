@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PWUD's MASTERLIST</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background-color: #e0f7fa;
+      color: #333;
+    }
+    header {
+      background-color: #00796b;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    header img {
+      height: 40px;
+      margin-right: 10px;
+    }
+    header h1 {
+      font-size: 1.8rem;
+      margin: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 1rem;
+    }
+    form {
+      background-color: #ffffff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #b2dfdb;
+      border-radius: 4px;
+    }
+    input[readonly] {
+      background-color: #f1f8e9;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      margin: 0.2rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-primary { background-color: #0288d1; color: white; }
+    .btn-danger { background-color: #d32f2f; color: white; }
+    .btn-print { background-color: #388e3c; color: white; }
+    .records {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .record {
+      border-bottom: 1px solid #ddd;
+      padding: 0.5rem 0;
+    }
+    .record:last-child { border-bottom: none; }
+    .record img {
+      height: 40px;
+      width: 40px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    #searchBar {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    #searchBar input, #searchBar select {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .printable, .printable * {
+        visibility: visible;
+      }
+      .printable {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<header style="position: relative; background-color: #00796b; padding: 1.5rem;">
+  <h1 style="position: absolute; left: 50%; transform: translateX(-50%); margin: 0; font-size: 2.5rem; color: white;">
+    PWUD's MASTERLIST
+  </h1>
+  <div style="position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); display: flex; gap: 15px;">
+    <img src="logo1.png" alt="Logo 1" style="height: 50px;">
+    <img src="logo2.png" alt="Logo 2" style="height: 50px;">
+  </div>
+</header>
+
+<div class="container">
+  <form id="pwudForm">
+    <input type="text" placeholder="Last Name" id="lastname" required>
+    <input type="text" placeholder="Middle Name" id="middlename">
+    <input type="text" placeholder="First Name" id="firstname" required>
+    <input type="text" placeholder="Purok" id="purok">
+    <input type="text" placeholder="Barangay" id="barangay">
+    <input type="text" placeholder="Municipality" id="municipality">
+    <input type="text" placeholder="Province" id="province">
+    <input type="number" placeholder="Age" id="age" readonly>
+    <input type="date" id="birthdate">
+    <select id="gender">
+      <option value="">Select Gender</option>
+      <option>Male</option>
+      <option>Female</option>
+    </select>
+    <select id="civilstatus">
+      <option value="">Select Civil Status</option>
+      <option>Single</option>
+      <option>Married</option>
+      <option>Widowed</option>
+      <option>Separated</option>
+    </select>
+    <input type="text" placeholder="Contact Number" id="contact">
+    <input type="text" placeholder="Trainings (Optional)" id="trainings">
+
+<label for="drugtest">Drug Testing Result:</label>
+<select id="drugtest" required>
+  <option value="">-- Select Result --</option>
+  <option value="Negative">1. NEGATIVE</option>
+  <option value="Positive in Marijuana">2. POSITIVE IN MARIJUANA</option>
+  <option value="Positive in Shabu">3. POSITIVE IN SHABU</option>
+  <option value="Positive in Both">4. BOTH POSITIVE IN MARIJUANA AND SHABU</option>
+</select>
+
+<input type="text" placeholder="Remarks" id="remarks">
+    <input type="file" id="photo" accept="image/*">
+    <button type="submit" class="btn-primary">Add / Update</button>
+    <button type="button" class="btn-print" onclick="printAll()">Print All</button>
+    <button type="button" class="btn-print" onclick="printByBarangay()">Print Filter by Barangay</button>
+    <button type="button" class="btn-print" onclick="filterByDrugTest('positive')">Filter Positive</button>
+<button type="button" class="btn-print" onclick="filterByDrugTest('negative')">Filter Negative</button>
+<button type="button" class="btn-print" onclick="printFiltered()">Print Filtered</button>
+  </form>
+
+  <div id="searchBar">
+    <input type="text" id="searchInput" placeholder="Search by Last Name...">
+    <select id="barangayFilter">
+      <option value="">Filter by Barangay</option>
+    </select>
+  </div>
+
+  <div class="records" id="recordList"></div>
+</div>
+
+<div id="printArea" class="printable" style="display:none;"></div>
+
+<script>
+let pwuds = JSON.parse(localStorage.getItem('pwuds')) || [];
+let editingIndex = null;
+
+function calculateAge(birthdate) {
+  if (!birthdate) return '';
+  const today = new Date();
+  const birth = new Date(birthdate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+document.getElementById('birthdate').addEventListener('change', function() {
+  const age = calculateAge(this.value);
+  document.getElementById('age').value = age;
+});
+
+function renderList(filterLast = '', filterBrgy = '') {
+  const list = document.getElementById('recordList');
+  list.innerHTML = '';
+  const brgySet = new Set();
+
+  pwuds
+    .filter(p => 
+      p.lastname.toLowerCase().includes(filterLast.toLowerCase()) &&
+      (filterBrgy === '' || p.barangay === filterBrgy)
+    )
+    .forEach((data, index) => {
+      brgySet.add(data.barangay);
+      const div = document.createElement('div');
+      div.className = 'record';
+      div.innerHTML = `
+        <div style="display:flex; align-items:center;">
+          ${data.photo ? `<img src="${data.photo}" />` : ''}
+          <strong>${data.firstname} ${data.middlename} ${data.lastname}</strong> - ${data.barangay}, ${data.province}
+        </div>
+        <div>
+          <button class="btn-primary" onclick="edit(${index})">Edit</button>
+          <button class="btn-danger" onclick="del(${index})">Delete</button>
+          <button class="btn-print" onclick="printIndividual(${index})">Print Details</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+
+  updateBarangayFilter([...brgySet]);
+  localStorage.setItem('pwuds', JSON.stringify(pwuds));
+}
+
+function updateBarangayFilter(list) {
+  const filter = document.getElementById('barangayFilter');
+  const current = filter.value;
+  filter.innerHTML = '<option value="">Filter by Barangay</option>';
+  list.sort().forEach(brgy => {
+    const opt = document.createElement('option');
+    opt.value = brgy;
+    opt.textContent = brgy;
+    if (brgy === current) opt.selected = true;
+    filter.appendChild(opt);
+  });
+}
+
+document.getElementById('pwudForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const get = id => document.getElementById(id).value || "NA";
+  const photoInput = document.getElementById('photo');
+  const reader = new FileReader();
+
+  const saveData = (imgSrc = '') => {
+    const data = {
+      lastname: get('lastname'),
+      middlename: get('middlename'),
+      firstname: get('firstname'),
+      purok: get('purok'),
+      barangay: get('barangay'),
+      municipality: get('municipality'),
+      province: get('province'),
+      age: get('age'),
+      birthdate: get('birthdate'),
+      gender: get('gender'),
+      civilstatus: get('civilstatus'),
+      contact: get('contact'),
+      trainings: get('trainings'),
+      drugtest: get('drugtest'),
+      remarks: get('remarks'),
+      photo: imgSrc
+    };
+    if (editingIndex !== null) {
+      pwuds[editingIndex] = data;
+      editingIndex = null;
+    } else {
+      pwuds.push(data);
+    }
+    this.reset();
+    renderList(document.getElementById('searchInput').value, document.getElementById('barangayFilter').value);
+  };
+
+  if (photoInput.files[0]) {
+  const file = photoInput.files[0];
+  const img = new Image();
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 100;
+      canvas.height = 100;
+      ctx.drawImage(img, 0, 0, 100, 100);
+      const resizedData = canvas.toDataURL('image/jpeg', 0.7); // compressed to JPEG with 70% quality
+      saveData(resizedData);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+} else {
+  saveData();
+}
+});
+
+function edit(index) {
+  const d = pwuds[index];
+  editingIndex = index;
+  const set = (id, val) => document.getElementById(id).value = val !== "NA" ? val : "";
+  set('lastname', d.lastname);
+  set('middlename', d.middlename);
+  set('firstname', d.firstname);
+  set('purok', d.purok);
+  set('barangay', d.barangay);
+  set('municipality', d.municipality);
+  set('province', d.province);
+  set('birthdate', d.birthdate);
+  document.getElementById('age').value = calculateAge(d.birthdate);
+  set('gender', d.gender);
+  set('civilstatus', d.civilstatus);
+  set('contact', d.contact);
+  set('trainings', d.trainings);
+  set('drugtest', d.drugtest);
+  set('remarks', d.remarks);
+}
+
+function del(index) {
+  if (confirm("Delete this entry?")) {
+    pwuds.splice(index, 1);
+    renderList(document.getElementById('searchInput').value, document.getElementById('barangayFilter').value);
+  }
+}
+
+function printAll() {
+  let html = `
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+      <div style="text-align: center; margin-bottom: 10px;">
+        <img src="logo1.png" style="height: 50px; margin-right: 10px;">
+        <img src="logo2.png" style="height: 50px;">
+      </div>
+      <h2 style="text-align: center; margin: 10px 0;">PWUD's Masterlist</h2>
+      <hr style="margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 10px;" border="1">
+        <thead>
+          <tr style="background-color: #f0f0f0;">
+            <th style="padding: 8px;">No.</th>
+            <th style="padding: 8px;">First Name</th>
+            <th style="padding: 8px;">Middle Name</th>
+            <th style="padding: 8px;">Last Name</th>
+            <th style="padding: 8px;">Address</th>
+            <th style="padding: 8px;">Age</th>
+            <th style="padding: 8px;">Drug Test Result</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  pwuds.forEach((p, index) => {
+    html += `
+      <tr>
+        <td style="padding: 6px; text-align: center;">${index + 1}</td>
+        <td style="padding: 6px;">${p.firstname}</td>
+        <td style="padding: 6px;">${p.middlename}</td>
+        <td style="padding: 6px;">${p.lastname}</td>
+        <td style="padding: 6px;">Purok ${p.purok}, Brgy. ${p.barangay}, ${p.municipality}, ${p.province}</td>
+        <td style="padding: 6px; text-align: center;">${p.age}</td>
+        <td style="padding: 6px;">${p.drugtest}</td>
+      </tr>
+    `;
+  });
+  html += `</tbody></table></div>`;
+  const printDiv = document.getElementById('printArea');
+  printDiv.innerHTML = html;
+  printDiv.style.display = 'block';
+  window.print();
+  printDiv.style.display = 'none';
+}
+
+function printByBarangay() {
+  const filterBrgy = document.getElementById('barangayFilter').value;
+  if (!filterBrgy) {
+    alert("Please select a Barangay to filter before printing.");
+    return;
+  }
+
+  const filteredPwuds = pwuds.filter(p => p.barangay === filterBrgy);
+  if (filteredPwuds.length === 0) {
+    alert("No entries found for selected Barangay.");
+    return;
+  }
+
+  let html = `
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+      <div style="text-align: center; margin-bottom: 10px;">
+        <img src="logo1.png" style="height: 50px; margin-right: 10px;">
+        <img src="logo2.png" style="height: 50px;">
+      </div>
+      <h2 style="text-align: center; margin: 10px 0;">Barangay ${filterBrgy}</h2>
+      <hr style="margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 10px;" border="1">
+        <thead>
+          <tr style="background-color: #f0f0f0;">
+            <th style="padding: 8px;">No.</th>
+            <th style="padding: 8px;">First Name</th>
+            <th style="padding: 8px;">Middle Name</th>
+            <th style="padding: 8px;">Last Name</th>
+            <th style="padding: 8px;">Address</th>
+            <th style="padding: 8px;">Age</th>
+            <th style="padding: 8px;">Drug Test Result</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  filteredPwuds.forEach((p, index) => {
+    html += `
+      <tr>
+        <td style="padding: 6px; text-align: center;">${index + 1}</td>
+        <td style="padding: 6px;">${p.firstname}</td>
+        <td style="padding: 6px;">${p.middlename}</td>
+        <td style="padding: 6px;">${p.lastname}</td>
+        <td style="padding: 6px;">Purok ${p.purok}, Brgy. ${p.barangay}, ${p.municipality}, ${p.province}</td>
+        <td style="padding: 6px; text-align: center;">${p.age}</td>
+        <td style="padding: 6px;">${p.drugtest}</td>
+      </tr>
+    `;
+  });
+  html += `</tbody></table></div>`;
+  const printDiv = document.getElementById('printArea');
+  printDiv.innerHTML = html;
+  printDiv.style.display = 'block';
+  window.print();
+  printDiv.style.display = 'none';
+}
+
+function printIndividual(index) {
+  const p = pwuds[index];
+  let html = `
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+      <div style="text-align: center; margin-bottom: 5px;">
+        <img src="logo1.png" style="height: 50px; margin-right: 10px;">
+        <img src="logo2.png" style="height: 50px;">
+      </div>
+      <h2 style="text-align: center; margin: 10px 0;">PWUD's PROFILE</h2>
+      <hr style="margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="width: 30%; text-align: center; vertical-align: top; padding-right: 20px;">
+            ${p.photo ? `<img src="${p.photo}" style="width: 2in; height: 2in; border: 2px solid #000; object-fit: cover; border-radius: 8px;">` : ''}
+          </td>
+          <td style="width: 70%; vertical-align: top;">
+            <table style="width: 100%; font-size: 16px; border-collapse: collapse;" border="1">
+              <tr><td style="padding: 8px;"><strong>Name:</strong></td><td style="padding: 8px;">${p.firstname} ${p.middlename} ${p.lastname}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Address:</strong></td><td style="padding: 8px;">Purok ${p.purok}, Brgy. ${p.barangay}, ${p.municipality}, ${p.province}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Age:</strong></td><td style="padding: 8px;">${p.age}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Birthdate:</strong></td><td style="padding: 8px;">${p.birthdate}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Gender:</strong></td><td style="padding: 8px;">${p.gender}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Civil Status:</strong></td><td style="padding: 8px;">${p.civilstatus}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Contact No.:</strong></td><td style="padding: 8px;">${p.contact}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Trainings:</strong></td><td style="padding: 8px;">${p.trainings}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Drug Test Result:</strong></td><td style="padding: 8px;">${p.drugtest}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Remarks:</strong></td><td style="padding: 8px;">${p.remarks}</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+  const printDiv = document.getElementById('printArea');
+  printDiv.innerHTML = html;
+  printDiv.style.display = 'block';
+  window.print();
+  printDiv.style.display = 'none';
+}
+document.getElementById('searchInput').addEventListener('input', function() {
+  renderList(this.value, document.getElementById('barangayFilter').value);
+});
+document.getElementById('barangayFilter').addEventListener('change', function() {
+  renderList(document.getElementById('searchInput').value, this.value);
+});
+
+renderList();
+let filteredList = [];
+
+function filterByDrugTest(type) {
+  if (type === 'positive') {
+    filteredList = pwuds.filter(p =>
+      p.drugtest === 'Positive in Marijuana' ||
+      p.drugtest === 'Positive in Shabu' ||
+      p.drugtest === 'Positive in Both'
+    );
+  } else if (type === 'negative') {
+    filteredList = pwuds.filter(p => p.drugtest === 'Negative');
+  }
+
+  displayFilteredList();
+}
+
+function displayFilteredList() {
+  const list = document.getElementById('recordList');
+  list.innerHTML = '';
+  filteredList.forEach((data, index) => {
+    const div = document.createElement('div');
+    div.className = 'record';
+    div.innerHTML = `
+      <div style="display:flex; align-items:center;">
+        ${data.photo ? `<img src="${data.photo}" />` : ''}
+        <strong>${data.firstname} ${data.middlename} ${data.lastname}</strong> - ${data.barangay}, ${data.province}
+      </div>
+      <div>
+        <button class="btn-print" onclick="printIndividualFromList(${index})">Print Details</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function printFiltered() {
+  if (filteredList.length === 0) {
+    alert("No records to print. Please filter first.");
+    return;
+  }
+
+  let html = `
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+      <div style="text-align: center; margin-bottom: 10px;">
+        <img src="logo1.png" style="height: 50px; margin-right: 10px;">
+        <img src="logo2.png" style="height: 50px;">
+      </div>
+      <h2 style="text-align: center; margin: 10px 0;">Filtered PWUD List</h2>
+      <hr style="margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 10px;" border="1">
+        <thead>
+          <tr style="background-color: #f0f0f0;">
+            <th style="padding: 8px;">No.</th>
+            <th style="padding: 8px;">First Name</th>
+            <th style="padding: 8px;">Middle Name</th>
+            <th style="padding: 8px;">Last Name</th>
+            <th style="padding: 8px;">Address</th>
+            <th style="padding: 8px;">Age</th>
+            <th style="padding: 8px;">Drug Test Result</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  filteredList.forEach((p, index) => {
+    html += `
+      <tr>
+        <td style="padding: 6px; text-align: center;">${index + 1}</td>
+        <td style="padding: 6px;">${p.firstname}</td>
+        <td style="padding: 6px;">${p.middlename}</td>
+        <td style="padding: 6px;">${p.lastname}</td>
+        <td style="padding: 6px;">Purok ${p.purok}, Brgy. ${p.barangay}, ${p.municipality}, ${p.province}</td>
+        <td style="padding: 6px; text-align: center;">${p.age}</td>
+        <td style="padding: 6px;">${p.drugtest}</td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table></div>`;
+  const printDiv = document.getElementById('printArea');
+  printDiv.innerHTML = html;
+  printDiv.style.display = 'block';
+  window.print();
+  printDiv.style.display = 'none';
+}
+
+function printIndividualFromList(index) {
+  const p = filteredList[index];
+  let html = `
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+      <div style="text-align: center; margin-bottom: 5px;">
+        <img src="logo1.png" style="height: 50px; margin-right: 10px;">
+        <img src="logo2.png" style="height: 50px;">
+      </div>
+      <h2 style="text-align: center; margin: 10px 0;">PWUD's PROFILE</h2>
+      <hr style="margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="width: 30%; text-align: center; vertical-align: top; padding-right: 20px;">
+            ${p.photo ? `<img src="${p.photo}" style="width: 2in; height: 2in; border: 2px solid #000; object-fit: cover; border-radius: 8px;">` : ''}
+          </td>
+          <td style="width: 70%; vertical-align: top;">
+            <table style="width: 100%; font-size: 16px; border-collapse: collapse;" border="1">
+              <tr><td style="padding: 8px;"><strong>Name:</strong></td><td style="padding: 8px;">${p.firstname} ${p.middlename} ${p.lastname}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Address:</strong></td><td style="padding: 8px;">Purok ${p.purok}, Brgy. ${p.barangay}, ${p.municipality}, ${p.province}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Age:</strong></td><td style="padding: 8px;">${p.age}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Birthdate:</strong></td><td style="padding: 8px;">${p.birthdate}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Gender:</strong></td><td style="padding: 8px;">${p.gender}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Civil Status:</strong></td><td style="padding: 8px;">${p.civilstatus}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Contact No.:</strong></td><td style="padding: 8px;">${p.contact}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Trainings:</strong></td><td style="padding: 8px;">${p.trainings}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Drug Test Result:</strong></td><td style="padding: 8px;">${p.drugtest}</td></tr>
+              <tr><td style="padding: 8px;"><strong>Remarks:</strong></td><td style="padding: 8px;">${p.remarks}</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+  const printDiv = document.getElementById('printArea');
+  printDiv.innerHTML = html;
+  printDiv.style.display = 'block';
+  window.print();
+  printDiv.style.display = 'none';
+}
+</script>
+</body>
+</html>
